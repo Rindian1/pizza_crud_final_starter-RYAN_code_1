@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pizza Menu</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.png') }}" alt="CRUD Pizza Logo" class="logo">
+  </div>
+  <div class="container">
+    <!-- <h1>Order Your Pizza</h1> -->
+
+    {% if pizzas and pizzas|length > 0 %}
+      <form method="post" action="{{ url_for('create_order') }}">
+        <div class="field">
+          <label for="pizza_id">Choose your pizza</label>
+          <select id="pizza_id" name="pizza_id" required>
+            {% for p in pizzas %}
+              <option value="{{ p['id'] }}" {% if form and form.pizza_id|int == p['id'] %}selected{% endif %}>
+                {{ p['name'] }} - ${{ '%.2f' % p['price'] }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="quantity">Quantity</label>
+          <input type="number" id="quantity" name="quantity" min="1" step="1" value="{{ form.quantity if form and form.quantity else 1 }}" required>
+        </div>
+
+        <div class="field">
+          <label for="customer_name">Your Name</label>
+          <input type="text" id="customer_name" name="customer_name" value="{{ form.customer_name if form and form.customer_name else '' }}" required>
+        </div>
+
+        <button type="submit">Place Order</button>
+      </form>
+
+      <!-- <h2>Menu</h2> -->
+      <div class="pizza-grid">
+        {% for p in pizzas %}
+          <div class="pizza-item">
+            <img src="{{ url_for('static', filename='images/pizzas/' + p['name'].lower().replace(' ', '') + '.avif') }}" 
+                 alt="{{ p['name'] }}" class="pizza-image"
+                 onerror="this.onerror=null; this.src='/static/images/pizzas/default.jpg'">
+            <div class="pizza-name">{{ p['name'] }}</div>
+            <div class="pizza-price">${{ '%.2f' % p['price'] }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    <!-- {% else %}
+      <p class="note">The menu is currently unavailable. Please ensure the database with the <code>Pizza</code> table is present at <code>data/pizzas.db</code>.</p>
+    {% endif %} -->
+  </div>
+</body>
+</html>

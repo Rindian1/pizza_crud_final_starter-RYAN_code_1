@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order Confirmed</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.jpg') }}" alt="CRUD Pizza Logo" class="logo">
+  </div>
+  <div class="container">
+    <h1>Thank you!</h1>
+    <p>Your order has been placed and is being prepared.</p>
+
+    <div class="order-details">
+      <h2>Order Summary</h2>
+      <p><strong>Order #:</strong> {{ order.order_id }}</p>
+      <p><strong>Date:</strong> {{ order.order_date }}</p>
+
+      <table class="order-summary">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ order.pizza_name }}</td>
+            <td>{{ order.quantity }}</td>
+            <td>${{ '%.2f' % order.price }}</td>
+            <td>${{ '%.2f' % (order.price * order.quantity) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="order-total">
+        <p><strong>Total:</strong> ${{ '%.2f' % order.total }}</p>
+      </div>
+    </div>
+
+    <a href="#" class="back-link">Back to Menu</a>
+  </div>
+</body>
+</html>
