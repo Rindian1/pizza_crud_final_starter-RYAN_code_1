@@ -11,7 +11,7 @@
     <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.png') }}" alt="CRUD Pizza Logo" class="logo">
   </div>
   <div class="container">
-    <!-- <h1>Order Your Pizza</h1> -->
+    <h1>Order Your Pizza</h1>
 
     {% if pizzas and pizzas|length > 0 %}
       <form method="post" action="{{ url_for('create_order') }}">
