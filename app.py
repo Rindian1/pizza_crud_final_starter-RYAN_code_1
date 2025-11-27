@@ -124,15 +124,64 @@ def save_order(pizza_id, quantity, customer_name, promo_code_id=None):
     finally:
         conn.close()
 
+def validate_promo_code(code):
+    """Validate promo code and return promo code info or None"""
+    if not code:
+        return None
+    
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, discount_percent, usage_limit, times_used, start_date, end_date
+            FROM PromoCode 
+            WHERE code = ?
+        ''', (code.upper(),))
+        promo = cursor.fetchone()
+        
+        if not promo:
+            return None
+            
+        promo_id, discount_percent, usage_limit, times_used, start_date, end_date = promo
+        
+        # Check if promo is still valid
+        from datetime import datetime
+        now = datetime.now().isoformat()
+        if now < start_date or now > end_date:
+            return None
+            
+        # Check usage limit
+        if usage_limit is not None and times_used >= usage_limit:
+            return None
+            
+        return {
+            'id': promo_id,
+            'discount_percent': discount_percent,
+            'code': code.upper()
+        }
+    finally:
+        conn.close()
+
+def increment_promo_usage(promo_id):
+    """Increment the times_used counter for a promo code"""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('UPDATE PromoCode SET times_used = times_used + 1 WHERE id = ?', (promo_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
 def get_order_details(order_id):
     """Get order details from database"""
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT o.id, p.name, p.price, o.quantity
+            SELECT o.id, p.name, p.price, o.quantity, o.customer_name, o.timestamp, pc.code, pc.discount_percent
             FROM "Order" o
             JOIN Pizza p ON o.pizza_id = p.id
+            LEFT JOIN PromoCode pc ON o.promo_code_id = pc.id
             WHERE o.id = ?
         ''', (order_id,))
         return cursor.fetchone()
@@ -152,12 +201,28 @@ def create_order():
     pizza_id = request.form.get('pizza_id')
     quantity = request.form.get('quantity')
     customer_name = request.form.get('customer_name')
-    promo_code_id = request.form.get('promo_code_id')
+    promo_code = request.form.get('promo_code', '').strip()
     
     if not pizza_id or not quantity or not customer_name:
         return redirect(url_for('menu'))
-        
+    
+    # Validate promo code - must be empty or valid
+    if promo_code:
+        promo_info = validate_promo_code(promo_code)
+        if not promo_info:
+            # Invalid promo code - redirect back to menu with error
+            return redirect(url_for('menu'))
+        promo_code_id = promo_info['id']
+    else:
+        promo_info = None
+        promo_code_id = None
+    
     order_id = save_order(pizza_id, quantity, customer_name, promo_code_id)
+    
+    # Increment promo usage if valid
+    if promo_info:
+        increment_promo_usage(promo_info['id'])
+        
     return redirect(url_for('confirmation', order_id=order_id))
 
 @app.route('/confirmation')
@@ -170,18 +235,34 @@ def confirmation():
     order = get_order_details(order_id)
     if not order:
         return redirect(url_for('menu'))
-        
+    
+    # Extract order details
+    order_id_val, pizza_name, price, quantity, customer_name, timestamp, promo_code, discount_percent = order
+    
+    # Calculate totals and discounts
+    subtotal = price * quantity
+    discount_amount = 0
+    if promo_code and discount_percent:
+        discount_amount = subtotal * discount_percent
+    
+    total = subtotal - discount_amount
+    
     order_data = {
-        'order_id': order[0],
-        'pizza_name': order[1],
-        'price': order[2],
-        'quantity': order[3],
-        'total': order[2] * order[3]
+        'order_id': order_id_val,
+        'pizza_name': pizza_name,
+        'price': price,
+        'quantity': quantity,
+        'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'total': total,
+        'promo_code': promo_code,
+        'discount_percent': discount_percent,
+        'customer_name': customer_name
     }
     
     return render_template('confirmation.html', 
                          order=order_data, 
-                         display_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                         display_date=datetime.now().isoformat())
 
 if __name__ == '__main__':
     init_db()
