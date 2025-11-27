@@ -83,7 +83,7 @@ def init_db():
         if cursor.fetchone()[0] == 0:
             sample_promos = [
                 ('WELCOME10', 0.10, '2024-01-01T00:00:00', '2025-12-31T23:59:59', None, 0),
-                ('MIDEWEEK15', 0.15, '2024-01-01T00:00:00', '2025-12-31T23:59:59', 200, 0),
+                ('MIDWEEK15', 0.15, '2024-01-01T00:00:00', '2025-12-31T23:59:59', 200, 0),
                 ('FAMILY20', 0.20, '2024-01-01T00:00:00', '2025-12-31T23:59:59', 150, 0)
             ]
             cursor.executemany('INSERT INTO PromoCode (code, discount_percent, start_date, end_date, usage_limit, times_used) VALUES (?, ?, ?, ?, ?, ?)', sample_promos)
