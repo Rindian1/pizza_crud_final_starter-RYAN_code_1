@@ -38,10 +38,26 @@ def init_db():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS "Order" (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                pizza_id INTEGER,
+                pizza_id INTEGER NOT NULL,
                 quantity INTEGER NOT NULL,
-                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (pizza_id) REFERENCES Pizza (id)
+                customer_name TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                promo_code_id INTEGER NULL,
+                FOREIGN KEY (pizza_id) REFERENCES Pizza (id),
+                FOREIGN KEY (promo_code_id) REFERENCES PromoCode (id)
+            )
+        ''')
+        
+        # Create PromoCode table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS PromoCode (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT NOT NULL UNIQUE,
+                discount_percent REAL NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                usage_limit INTEGER NOT NULL,
+                times_used INTEGER NOT NULL DEFAULT 0
             )
         ''')
         
@@ -79,15 +95,16 @@ def get_all_pizzas():
     finally:
         conn.close()
 
-def save_order(pizza_id, quantity):
+def save_order(pizza_id, quantity, customer_name, promo_code_id=None):
     """Save order to database and return order ID"""
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Generate ISO 8601 timestamp
+        current_time = datetime.now().isoformat()
         cursor.execute(
-            'INSERT INTO "Order" (pizza_id, quantity, order_date) VALUES (?, ?, ?)',
-            (pizza_id, quantity, current_time)
+            'INSERT INTO "Order" (pizza_id, quantity, customer_name, timestamp, promo_code_id) VALUES (?, ?, ?, ?, ?)',
+            (pizza_id, quantity, customer_name, current_time, promo_code_id)
         )
         order_id = cursor.lastrowid
         conn.commit()
@@ -122,11 +139,13 @@ def create_order():
     """Process the pizza order"""
     pizza_id = request.form.get('pizza_id')
     quantity = request.form.get('quantity')
+    customer_name = request.form.get('customer_name')
+    promo_code_id = request.form.get('promo_code_id')
     
-    if not pizza_id or not quantity:
+    if not pizza_id or not quantity or not customer_name:
         return redirect(url_for('menu'))
         
-    order_id = save_order(pizza_id, quantity)
+    order_id = save_order(pizza_id, quantity, customer_name, promo_code_id)
     return redirect(url_for('confirmation', order_id=order_id))
 
 @app.route('/confirmation')
@@ -154,4 +173,4 @@ def confirmation():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
