@@ -67,10 +67,10 @@ def init_db():
         if cursor.fetchone()[0] == 0:
             sample_pizzas = [
                 ('Margherita', 14.99),
-                ('Pepperoni', 1.99),
-                ('Hawaiian', 99.99),
+                ('Pepperoni', 13.99),
+                ('Hawaiian', 13.49),
                 ('Vegetarian', 12.99),
-                ('Supreme', 14.99),
+                ('Supreme', 15.49),
                 ('BBQ Chicken', 13.99),
                 ('Meat Lovers', 15.99),
                 ('Buffalo', 16.99)
@@ -189,11 +189,25 @@ def get_order_details(order_id):
         conn.close()
 
 # Routes
+def pizza_image_filename(pizza_name):
+    """Get the correct image filename for a pizza name"""
+    image_mapping = {
+        'Margherita': 'margharita.avif',
+        'Pepperoni': 'pepperoni.avif',
+        'Hawaiian': 'hawaiian.avif',
+        'Vegetarian': 'vegetarian.avif',
+        'Supreme': 'Supreme.jpg',
+        'BBQ Chicken': 'bbq_chicken.avif',
+        'Meat Lovers': 'meat lovers.avif',
+        'Buffalo': 'buffalo.avif'
+    }
+    return image_mapping.get(pizza_name, 'default.jpg')
+
 @app.route('/')
 def menu():
     """Show the pizza menu and order form"""
     pizzas = get_all_pizzas()
-    return render_template('menu.html', pizzas=pizzas)
+    return render_template('menu.html', pizzas=pizzas, pizza_image_filename=pizza_image_filename)
 
 @app.route('/order', methods=['POST'])
 def create_order():

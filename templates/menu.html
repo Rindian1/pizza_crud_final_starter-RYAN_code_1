@@ -48,7 +48,7 @@
       <div class="pizza-grid">
         {% for p in pizzas %}
           <div class="pizza-item">
-            <img src="{{ url_for('static', filename='images/pizzas/' + p['name'].lower().replace(' ', '') + '.avif') }}" 
+            <img src="{{ url_for('static', filename='images/pizzas/' + pizza_image_filename(p['name'])) }}" 
                  alt="{{ p['name'] }}" class="pizza-image"
                  onerror="this.onerror=null; this.src='/static/images/pizzas/default.jpg'">
             <div class="pizza-name">{{ p['name'] }}</div>

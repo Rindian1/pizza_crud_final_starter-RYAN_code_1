@@ -11,7 +11,7 @@
     <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.png') }}" alt="CRUD Pizza Logo" class="logo">
   </div>
   <div class="container">
-    <h1>Thank you!</h1>
+    <h1>Thank you, {{ order.customer_name }}!</h1>
     <p>Your order has been placed and is being prepared.</p>
 
     <div class="order-details">
@@ -50,7 +50,7 @@
       </div>
     </div>
 
-    <a href="{{ url_for('menu') }}" class="back-link">Back to Menu</a>
+    <button onclick="window.location.href='{{ url_for('menu') | escape }}'" class="back-button">Back to Menu</button>
   </div>
 </body>
 </html>
