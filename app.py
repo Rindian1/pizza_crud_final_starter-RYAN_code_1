@@ -49,14 +49,15 @@ def init_db():
         ''')
         
         # Create PromoCode table
+        cursor.execute('DROP TABLE IF EXISTS PromoCode')
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS PromoCode (
+            CREATE TABLE PromoCode (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 code TEXT NOT NULL UNIQUE,
                 discount_percent REAL NOT NULL,
                 start_date TEXT NOT NULL,
                 end_date TEXT NOT NULL,
-                usage_limit INTEGER NOT NULL,
+                usage_limit INTEGER NULL,
                 times_used INTEGER NOT NULL DEFAULT 0
             )
         ''')
@@ -75,6 +76,17 @@ def init_db():
                 ('Buffalo', 16.99)
             ]
             cursor.executemany('INSERT INTO Pizza (name, price) VALUES (?, ?)', sample_pizzas)
+            conn.commit()
+        
+        # Add sample promo codes if table is empty
+        cursor.execute('SELECT COUNT(*) FROM PromoCode')
+        if cursor.fetchone()[0] == 0:
+            sample_promos = [
+                ('WELCOME10', 0.10, '2024-01-01T00:00:00', '2025-12-31T23:59:59', None, 0),
+                ('MIDEWEEK15', 0.15, '2024-01-01T00:00:00', '2025-12-31T23:59:59', 200, 0),
+                ('FAMILY20', 0.20, '2024-01-01T00:00:00', '2025-12-31T23:59:59', 150, 0)
+            ]
+            cursor.executemany('INSERT INTO PromoCode (code, discount_percent, start_date, end_date, usage_limit, times_used) VALUES (?, ?, ?, ?, ?, ?)', sample_promos)
             conn.commit()
     except Exception as e:
         print(f"Error initializing database: {e}")
